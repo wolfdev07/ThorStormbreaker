@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt: proyecto de CMake para ThorStormbreaker, incluya el origen y defina
 # la lógica específica del proyecto aquí.
 #
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.16)
 
 # Habilite Recarga activa para los compiladores de MSVC si se admiten.
 if (POLICY CMP0141)
@@ -66,8 +66,15 @@ add_executable(ThorStormbreaker
     "services/IFingerprintService.h"
     "services/implement/FingerprintServiceImpl.h"
     "services/implement/FingerprintServiceImpl.cpp"
-    "services/Environment.h"
-    "services/IBrowserService.h"
+    
+    "config/SecureString.h"
+    "config/Cipher.h"
+    "config/ConfigManager.h"
+    "config/ConfigEnvironment.h"
+    "config/ConfigGenerator.h"
+    
+    "ui/WebViewUI.h"
+    "ui/WebViewUI.cpp"
 )
 
 # Establecer estándar C++ 20
@@ -76,10 +83,16 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
 endif()
 
 # Vincular la librería libzkfp (enlace estático, no requiere DLL)
-target_link_libraries(ThorStormbreaker PRIVATE ${LIBZKFP_LIBRARY})
+target_link_libraries(ThorStormbreaker PRIVATE 
+    ${LIBZKFP_LIBRARY}
+    webview::core
+)
 
 # Incluir directorios para el target
-target_include_directories(ThorStormbreaker PRIVATE ${LIBZKFP_DIR}/include)
+target_include_directories(ThorStormbreaker PRIVATE 
+    ${LIBZKFP_DIR}/include
+    ${CMAKE_SOURCE_DIR}/ui
+)
 
 # ============================================
 # Copiar DLLs y archivos de datos (si existen)
@@ -118,26 +131,15 @@ else()
 endif()
 
 # ============================================
-# Configuración de Chromium Embedded Framework (CEF)
-# ============================================
+# Webview Integration (opcional)
+# ===========================================
+include(FetchContent)
 
-# Opción para habilitar/deshabilitar CEF
-option(USE_CEF "Incluir Chromium Embedded Framework para renderizado web" OFF)
-
-if(USE_CEF)
-    message(STATUS "")
-    message(STATUS "Configurando Chromium Embedded Framework...")
-    include(DownloadCEF)
-    
-    # Verificar que CEF se descargó correctamente
-    if(COMMAND setup_cef)
-        setup_cef(ThorStormbreaker)
-        message(STATUS "CEF configurado correctamente")
-    else()
-        message(WARNING "CEF no está disponible. Ejecute .\GestionarCEF.ps1 descargar primero")
-    endif()
-else()
-    message(STATUS "CEF deshabilitado (USE_CEF=OFF). Para habilitarlo: cmake -DUSE_CEF=ON")
-endif()
+FetchContent_Declare(
+    webview
+    GIT_REPOSITORY https://github.com/webview/webview
+    GIT_TAG 0.12.0
+)
+FetchContent_MakeAvailable(webview)
 
 # TODO: Agregue pruebas y destinos de instalación si es necesario.

@@ -81,28 +81,49 @@ function(setup_cef TARGET_NAME)
     # Asegurar que CEF está descargado
     download_cef()
     
-    # Configurar CMake de CEF
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CEF_BINARY_DIR}/cmake")
-    
-    # Buscar el paquete CEF
-    find_package(CEF REQUIRED PATHS "${CEF_BINARY_DIR}")
-    
-    if(CEF_FOUND)
-        message(STATUS "CEF encontrado:")
-        message(STATUS "  Versión: ${CEF_VERSION}")
-        message(STATUS "  Include: ${CEF_INCLUDE_PATH}")
-        message(STATUS "  Libraries: ${CEF_LIBRARY_DEBUG} / ${CEF_LIBRARY_RELEASE}")
+    # Verificar que el directorio existe
+    if(NOT EXISTS "${CEF_BINARY_DIR}")
+        message(FATAL_ERROR "CEF no encontrado en: ${CEF_BINARY_DIR}")
     endif()
+    
+    # Buscar directorios de include y librerías
+    set(CEF_INCLUDE_PATH "${CEF_BINARY_DIR}")
+    if(EXISTS "${CEF_BINARY_DIR}/include")
+        set(CEF_INCLUDE_PATH "${CEF_BINARY_DIR}/include")
+    endif()
+    
+    message(STATUS "CEF encontrado:")
+    message(STATUS "  Versión: ${CEF_VERSION}")
+    message(STATUS "  Directorio: ${CEF_BINARY_DIR}")
+    message(STATUS "  Include: ${CEF_INCLUDE_PATH}")
     
     # Agregar directorios de include
     target_include_directories(${TARGET_NAME} PRIVATE
         ${CEF_INCLUDE_PATH}
     )
     
-    # Vincular librerías CEF
+    # Buscar y vincular librerías CEF
+    if(CMAKE_BUILD_TYPE MATCHES Debug)
+        set(CEF_LIB_DIR "${CEF_BINARY_DIR}/Debug")
+    else()
+        set(CEF_LIB_DIR "${CEF_BINARY_DIR}/Release")
+    endif()
+    
+    # Librerías principales
+    if(EXISTS "${CEF_LIB_DIR}/libcef.lib")
+        target_link_libraries(${TARGET_NAME} PRIVATE "${CEF_LIB_DIR}/libcef.lib")
+    endif()
+    
+    if(EXISTS "${CEF_LIB_DIR}/libcef_dll_wrapper.lib")
+        target_link_libraries(${TARGET_NAME} PRIVATE "${CEF_LIB_DIR}/libcef_dll_wrapper.lib")
+    endif()
+    
+    # Librerías estándar de Windows requeridas por CEF
     target_link_libraries(${TARGET_NAME} PRIVATE
-        libcef_dll_wrapper
-        ${CEF_STANDARD_LIBS}
+        comctl32.lib
+        rpcrt4.lib
+        shlwapi.lib
+        ws2_32.lib
     )
     
     # Configurar opciones de compilación
@@ -120,20 +141,24 @@ function(setup_cef TARGET_NAME)
     endif()
     
     # Copiar binarios de CEF al directorio de salida
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CEF_BINARY_DIR}/Release"
-        "$<TARGET_FILE_DIR:${TARGET_NAME}>"
-        COMMENT "Copiando binarios de CEF..."
-    )
+    if(EXISTS "${CEF_LIB_DIR}")
+        add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CEF_LIB_DIR}"
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>"
+            COMMENT "Copiando binarios de CEF..."
+        )
+    endif()
     
     # Copiar recursos de CEF
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CEF_BINARY_DIR}/Resources"
-        "$<TARGET_FILE_DIR:${TARGET_NAME}>"
-        COMMENT "Copiando recursos de CEF..."
-    )
+    if(EXISTS "${CEF_BINARY_DIR}/Resources")
+        add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CEF_BINARY_DIR}/Resources"
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>"
+            COMMENT "Copiando recursos de CEF..."
+        )
+    endif()
     
     message(STATUS "CEF configurado para ${TARGET_NAME}")
 endfunction()
