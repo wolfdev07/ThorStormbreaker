@@ -17,6 +17,11 @@ project ("ThorStormbreaker")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 # ============================================
+# Cargar variables de entorno desde .env (opcional)
+# ============================================
+include(LoadEnvCMake)
+
+# ============================================
 # Configuración de libzkfp
 # ============================================
 
@@ -61,6 +66,8 @@ add_executable(ThorStormbreaker
     "services/IFingerprintService.h"
     "services/implement/FingerprintServiceImpl.h"
     "services/implement/FingerprintServiceImpl.cpp"
+    "services/Environment.h"
+    "services/IBrowserService.h"
 )
 
 # Establecer estándar C++ 20

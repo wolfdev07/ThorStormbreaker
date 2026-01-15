@@ -381,12 +381,12 @@ void mostrarMenu() {
 
 
 int main() {
-    // Inicialización del sistema
-    limpiarConsola();
-    cout << "============================================" << endl;
-    cout << "ThorStormbreaker - Sistema de Huellas v1.0" << endl;
-    cout << "============================================" << endl << endl;
-    
+// Inicialización del sistema
+limpiarConsola();
+cout << "============================================" << endl;
+cout << "ThorStormbreaker - Sistema de Huellas v1.0" << endl;
+cout << "============================================" << endl << endl;
+  
     cout << "[1/3] Creando servicio de huellas..." << endl;
     unique_ptr<IFingerprintService> fingerprintService = 
         make_unique<FingerprintServiceImpl>();

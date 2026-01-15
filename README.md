@@ -5,6 +5,7 @@ Sistema completo de captura, registro e identificación de huellas dactilares us
 ## 📋 Tabla de Contenidos
 
 - [Descripción General](#-descripción-general)
+- [Sistema de Configuración Segura](#-sistema-de-configuración-segura)
 - [Requisitos Previos](#-requisitos-previos)
 - [Solución Rápida al Error -2](#-solución-rápida-al-error--2)
 - [Arquitectura del Proyecto](#-arquitectura-del-proyecto)
@@ -30,13 +31,22 @@ ThorStormbreaker es un sistema modular de autenticación biométrica que proporc
 - ✅ **Verificación 1:1** (confirmar identidad específica)
 - ✅ **Gestión de base de datos** de templates
 - ✅ **Arquitectura modular** con interfaces bien definidas
+- ✅ **Configuración cifrada** con AES-256 y limpieza segura de memoria
 
 ### Estructura del Proyecto
 
 ```
 ThorStormbreaker/
+├── config/
+│   ├── SecureString.h                     # String con limpieza automática de memoria
+│   ├── Cipher.h                           # Cifrado/descifrado AES-256
+│   ├── ConfigManager.h                    # Gestor de archivos config.dat cifrados
+│   ├── ConfigEnvironment.h                # API singleton para configuración global
+│   └── ConfigGenerator.h                  # Generador interactivo de config.dat
+│
 ├── services/
 │   ├── IFingerprintService.h              # Interfaz (contrato)
+│   ├── Environment.h                      # Wrapper de compatibilidad para configuración
 │   └── implement/
 │       ├── FingerprintServiceImpl.h       # Header de implementación
 │       └── FingerprintServiceImpl.cpp     # Implementación completa
@@ -56,6 +66,108 @@ ThorStormbreaker/
 ├── CMakeLists.txt                         # Configuración de build
 └── README.md                              # Este archivo
 ```
+
+---
+
+## 🔐 Sistema de Configuración Segura
+
+ThorStormbreaker incluye un sistema de gestión de configuración con **cifrado AES-256** para proteger credenciales y secretos.
+
+### 🎯 Características
+
+- **Cifrado AES-256** usando Windows CryptoAPI
+- **Descifrado en RAM** - Los secretos nunca tocan el disco sin cifrar
+- **Limpieza segura de memoria** - `SecureZeroMemory` previene recuperación de datos
+- **Bloqueo de memoria** - `VirtualLock` evita que secretos se escriban al swap
+- **API simple y segura** - Singleton pattern con métodos estáticos
+
+### 🚀 Uso Rápido
+
+```cpp
+#include "config/ConfigEnvironment.h"
+
+int main() {
+    // 1. Inicializar (una vez al inicio)
+    if (!ConfigEnvironment::initialize("TuPasswordSegura123!")) {
+        std::cerr << "Error al cargar configuración" << std::endl;
+        return -1;
+    }
+    
+    // 2. Usar en cualquier parte de la aplicación
+    std::string dbPath = ConfigEnvironment::get("DB_PATH", "default.db");
+    std::string dbPassword = ConfigEnvironment::get("DB_PASSWORD");
+    int timeout = ConfigEnvironment::getInt("FP_TIMEOUT", 5000);
+    bool debugMode = ConfigEnvironment::getBool("DEBUG_MODE", false);
+    
+    // 3. Limpiar al finalizar (opcional pero recomendado)
+    ConfigEnvironment::shutdown();
+    
+    return 0;
+}
+```
+
+### 📁 Formato del archivo config.dat
+
+El archivo `config.dat` se cifra automáticamente con AES-256. El formato interno es:
+
+```ini
+# Configuración de base de datos
+DB_PATH=fingerprints.db
+DB_PASSWORD=SecretPassword123
+
+# API Keys
+API_KEY=sk_live_abc123xyz789
+
+# Configuración del lector
+FP_DEVICE_INDEX=0
+FP_TIMEOUT=5000
+DEBUG_MODE=true
+```
+
+### 🛠️ Crear archivo config.dat
+
+```cpp
+#include "config/ConfigGenerator.h"
+
+int main() {
+    // Opción A: Generador interactivo
+    ConfigGenerator::generateInteractive();
+    
+    // Opción B: Crear programáticamente
+    std::map<std::string, std::string> config = {
+        {"DB_PATH", "fingerprints.db"},
+        {"DB_PASSWORD", "SecurePass123"},
+        {"FP_TIMEOUT", "5000"}
+    };
+    
+    ConfigManager configMgr("config.dat");
+    configMgr.create("MasterPassword", config);
+    
+    return 0;
+}
+```
+
+### 🔒 Seguridad
+
+| Característica | Implementación |
+|---------------|----------------|
+| **Algoritmo** | AES-256-CBC |
+| **Derivación de clave** | SHA-256 via `CryptDeriveKey` |
+| **Limpieza de memoria** | `SecureZeroMemory` (no optimizable) |
+| **Bloqueo en RAM** | `VirtualLock` (previene swap) |
+| **Strings seguros** | `SecureString` con RAII |
+
+### 📚 Clases Disponibles
+
+| Clase | Uso | Descripción |
+|-------|-----|-------------|
+| **ConfigEnvironment** | ✅ Recomendado | API singleton, acceso global, thread-safe |
+| **Environment** | 🔄 Compatibilidad | Wrapper que delega a ConfigEnvironment |
+| ConfigManager | ⚙️ Avanzado | Múltiples archivos config, control fino |
+| SecureString | 🔒 Bajo nivel | Strings con limpieza automática |
+| Cipher | 🔒 Bajo nivel | Cifrado/descifrado directo |
+
+📖 **Documentación completa:** Ver [config/README.md](config/README.md) y [config/MIGRATION.md](config/MIGRATION.md)
 
 ---
 
