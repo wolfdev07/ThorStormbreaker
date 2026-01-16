@@ -20,6 +20,13 @@ public:
     void loadUrl(const std::string& url);
 
     /**
+	 * @brief Expone una función C++ al contexto JavaScript (binding)
+	 * @param name Nombre de la función en JavaScript (window.<name>)
+	 * @param fn Función C++ a ejecutar (firma: void(std::string req, std::function<void(std::string res)> resolve))
+	 */
+    void bind(const std::string& name, std::function<void(const std::string& req, std::function<void(const std::string& result)>)> fn);
+
+    /**
      * @brief Carga contenido HTML directamente
      * @param html Código HTML a renderizar
      */
@@ -42,6 +49,6 @@ public:
      */
     void terminate();
 
-private:
-    webview::webview wv;
+    private:
+        webview::webview wv;
 };
