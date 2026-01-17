@@ -97,7 +97,7 @@ void FingerEnrollServiceImpl::enroll(
 
         // === Persistencia SQLite ===
         try {
-            FingerPrintRepository repo("repository/fingerprints.db");
+            FingerPrintRepository repo("repository/thor.db");
 
             FingerPrint fp = repo.saveFingerPrint(uid, regTemplate);
 
