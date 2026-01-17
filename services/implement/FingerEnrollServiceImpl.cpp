@@ -1,87 +1,123 @@
 #include "FingerEnrollServiceImpl.h"
+#include "../../repository/Respository.h"
+
 #include <thread>
-#include <iostream>
-#include <sstream>
+#include <utility>
 #include <windows.h>
 
-static std::string base64(const std::vector<unsigned char>& data) {
-	static const char* tbl = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-	std::string out;
-
-	int val = 0, valb = -6;
-	for (unsigned char c : data) {
-		val = (val << 8) + c;
-		valb += 8;
-		while (valb >= 0) {
-			out.push_back(tbl[(val >> valb) & 0x3F]);
-			valb -= 6;
-		}
-	}
-
-	if (valb > -6) out.push_back(tbl[((val << 8) >> (valb + 8)) & 0x3F]);
-	while (out.size() % 4) out.push_back('=');
-	return out;
-}
-
-FingerEnrollServiceImpl::FingerEnrollServiceImpl(
-	std::shared_ptr<IFingerprintService> fp
-) : m_fp(fp) {}
+FingerEnrollServiceImpl::FingerEnrollServiceImpl(std::shared_ptr<IFingerprintService> fp) : m_fp(std::move(fp)) {}
 
 bool FingerEnrollServiceImpl::isDeviceAvailable() {
 	if (!m_fp->initialize()) return false;
-	if (m_fp->getDeviceCount() <= 0) return false;
-	return true;
+	return m_fp->getDeviceCount() > 0;
 }
 
 void FingerEnrollServiceImpl::enroll(
-	const std::string& memberNumber,
-	std::function<void(const std::string&, const std::string&)> emit,
-	std::function<void(bool)> done
+    const std::string& uid,
+    std::function<void(const std::string&, const std::string&)> emit,
+    std::function<void(bool)> done
 ) {
-	std::thread([=]() {
-		std::vector<std::vector<unsigned char>> templates;
+    std::thread([=]() {
 
-		emit("status", "starting");
+        emit("status", "initializing");
 
-		for (int i = 0; i < 6; ++i) {
-			emit("status", "place_finger");
+        if (!m_fp->initialize()) {
+            emit("error", "sdk_init_failed");
+            done(false);
+            return;
+        }
 
-			std::vector<unsigned char> img, tmpl;
-			int retries = 50;
+        if (m_fp->getDeviceCount() <= 0) {
+            emit("error", "no_device");
+            done(false);
+            return;
+        }
 
-			while (retries--) {
-				if (m_fp->acquireFingerprint(img, tmpl)) {
-					templates.push_back(tmpl);
-					emit("capture", std::to_string(i + 1));
-					break;
-				}
-				Sleep(100);
-			}
+        if (!m_fp->openDevice(0)) {
+            emit("error", "open_device_failed");
+            done(false);
+            return;
+        }
 
-			if (i > 0) {
-				int score;
-				m_fp->matchTemplates(templates[0], tmpl, score);
-				emit("score", std::to_string(score));
+        if (!m_fp->initDatabase()) {
+            emit("error", "init_database_failed");
+            m_fp->closeDevice();
+            return;
+        }
 
-				if (score < 95) {
-					emit("error", "low_similarity");
-					done(false);
-					return;
-				}
-			}
-			Sleep(1000);
-		}
+        std::vector<std::vector<unsigned char>> templates;
 
-		// Simular guardado
-		std::string b64 = base64(templates[0]);
+        emit("status", "enrolling");
 
-		std::cout << "\n[ENROLL SUCCESS]\n";
-		std::cout << "Member: " << memberNumber << "\n";
-		std::cout << "Fingerprint (b64): " << b64.substr(0, 64) << "... \n";
+        // === 3 fingerPrint ===
+        for (int i = 0; i < 3; ++i) {
+            emit("status", "place_finger");
 
-		emit("completed", "ok");
-		done(true);
+            std::vector<unsigned char> img, tmpl;
+            bool captured = false;
 
-	}).detach();
+            for (int retry = 0; retry < 150; ++retry) {
+                if (m_fp->acquireFingerprint(img, tmpl)) {
+                    templates.push_back(tmpl);
+                    emit("capture", std::to_string(i + 1));
+                    captured = true;
+                    break;
+                }
+                Sleep(100);
+            }
+
+            if (!captured) {
+                emit("error", "capture_timeout");
+                m_fp->closeDevice();
+                done(false);
+                return;
+            }
+
+            Sleep(1000);
+        }
+
+        // === DBMerge (igual que Python) ===
+        emit("status", "merging");
+
+        std::vector<unsigned char> regTemplate;
+        if (!m_fp->mergeTemplates(
+            templates[0],
+            templates[1],
+            templates[2],
+            regTemplate
+        )) {
+            emit("error", "merge_failed");
+            m_fp->closeDevice();
+            done(false);
+            return;
+        }
+
+        emit("status", "merged");
+
+        // === Persistencia SQLite ===
+        try {
+            FingerPrintRepository repo("repository/fingerprints.db");
+
+            FingerPrint fp = repo.saveFingerPrint(uid, regTemplate);
+
+            // === Cargar en RAM del lector (DBAdd) ===
+            if (!m_fp->addTemplate(fp.id, regTemplate)) {
+                emit("error", "dbadd_failed");
+                m_fp->closeDevice();
+                done(false);
+                return;
+            }
+
+            emit("completed", std::to_string(fp.id));
+            done(true);
+        }
+        catch (const std::exception& e) {
+            emit("error", e.what());
+            done(false);
+        }
+
+        m_fp->closeDevice();
+
+    }).detach();
 }

@@ -61,20 +61,21 @@ endif()
 
 # Agregue un origen al ejecutable de este proyecto.
 add_executable(ThorStormbreaker 
-    "ThorStormbreaker.cpp" 
-    "ThorStormbreaker.h"
-    "services/IFingerprintService.h"
-    "services/implement/FingerprintServiceImpl.h"
-    "services/implement/FingerprintServiceImpl.cpp"
+        "ThorStormbreaker.cpp"
+        "ThorStormbreaker.h"
+        "services/IFingerprintService.h"
+        "services/implement/FingerprintServiceImpl.h"
+        "services/implement/FingerprintServiceImpl.cpp"
+
+        "config/SecureString.h"
+        "config/Cipher.h"
+        "config/ConfigManager.h"
+        config/ConfigEnvironment.h
+        config/ConfigGenerator.h
     
-    "config/SecureString.h"
-    "config/Cipher.h"
-    "config/ConfigManager.h"
-    "config/ConfigEnvironment.h"
-    "config/ConfigGenerator.h"
-    
-    "ui/WebViewUI.h"
-    "ui/WebViewUI.cpp"
+        ui/WebViewUI.h
+        ui/WebViewUI.cpp
+        repository/Respository.h
 )
 
 # Establecer estándar C++ 20
@@ -83,9 +84,10 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
 endif()
 
 # Vincular la librería libzkfp (enlace estático, no requiere DLL)
-target_link_libraries(ThorStormbreaker PRIVATE 
-    ${LIBZKFP_LIBRARY}
-    webview::core
+target_link_libraries(ThorStormbreaker PRIVATE
+        sqlite3
+        ${LIBZKFP_LIBRARY}
+        webview::core
 )
 
 # Incluir directorios para el target
@@ -142,4 +144,17 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(webview)
 
+# ============================================
+# SQLite3 (amalgamation)
+# ============================================
+
+add_library(sqlite3 STATIC
+        ${CMAKE_SOURCE_DIR}/external/sqlite3/sqlite3.c
+        services/implement/FingerEnrollServiceImpl.cpp
+        repository/Respository.h
+)
+
+target_include_directories(sqlite3 PUBLIC
+        ${CMAKE_SOURCE_DIR}/external/sqlite3
+)
 # TODO: Agregue pruebas y destinos de instalación si es necesario.
