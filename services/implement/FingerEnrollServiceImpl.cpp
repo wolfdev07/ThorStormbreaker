@@ -16,7 +16,7 @@ bool FingerEnrollServiceImpl::isDeviceAvailable() {
 void FingerEnrollServiceImpl::enroll(
     const std::string& uid,
     std::function<void(const std::string&, const std::string&)> emit,
-    std::function<void(bool)> done
+    const std::function<void(bool)> done
 ) {
     std::thread([=]() {
 
@@ -52,6 +52,7 @@ void FingerEnrollServiceImpl::enroll(
 
         // === 3 fingerPrint ===
         for (int i = 0; i < 3; ++i) {
+            m_fp->setLed(101, true);
             emit("status", "place_finger");
 
             std::vector<unsigned char> img, tmpl;
@@ -62,6 +63,7 @@ void FingerEnrollServiceImpl::enroll(
                     templates.push_back(tmpl);
                     emit("capture", std::to_string(i + 1));
                     captured = true;
+                    m_fp->setLed(101, false);
                     break;
                 }
                 Sleep(100);
@@ -97,9 +99,9 @@ void FingerEnrollServiceImpl::enroll(
 
         // === Persistencia SQLite ===
         try {
-            FingerPrintRepository repo("repository/thor.db");
+            const FingerPrintRepository repo("repository/thor.db");
 
-            FingerPrint fp = repo.saveFingerPrint(uid, regTemplate);
+            const FingerPrint fp = repo.saveFingerPrint(uid, regTemplate);
 
             // === Cargar en RAM del lector (DBAdd) ===
             if (!m_fp->addTemplate(fp.id, regTemplate)) {
@@ -110,13 +112,18 @@ void FingerEnrollServiceImpl::enroll(
             }
 
             emit("completed", std::to_string(fp.id));
+            m_fp->setLed(101, true);
+            Sleep(1500);
+            m_fp->setLed(101, false);
             done(true);
         }
         catch (const std::exception& e) {
             emit("error", e.what());
+            m_fp->setLed(102, true);
+            Sleep(1500);
+            m_fp->setLed(102, false);
             done(false);
         }
-
         m_fp->closeDevice();
 
     }).detach();

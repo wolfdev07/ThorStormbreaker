@@ -42,7 +42,7 @@ static void enrollUI() {
     const std::shared_ptr<IFingerprintService> fingerprintService = std::make_shared<FingerprintServiceImpl>();
 
     // Create enroll service
-    std::shared_ptr<FingerEnrollService> enrollService = std::make_shared<FingerEnrollServiceImpl>(fingerprintService);
+    const std::shared_ptr<FingerEnrollService> enrollService = std::make_shared<FingerEnrollServiceImpl>(fingerprintService);
 
     if (!enrollService->isDeviceAvailable()) {
         std::cerr << "[ERROR] FingerprintService not available" << std::endl;

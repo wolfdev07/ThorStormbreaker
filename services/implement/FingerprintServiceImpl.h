@@ -71,5 +71,13 @@ public:
 
     bool getImageDimensions(int& width, int& height) override;
     int getLastError() const override;
+
+    bool setLed(int ledCode, bool on) override;
+
+    void ledGreenOn() override;
+    void ledGreenOff() override;
+    void ledRedOn() override;
+    void ledRedOff() override;
+
     std::string getErrorMessage(int errorCode) const override;
 };

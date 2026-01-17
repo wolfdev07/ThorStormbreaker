@@ -1,12 +1,10 @@
 #include "FingerprintServiceImpl.h"
-#include <windows.h>
 #include <libzkfp.h>
-#include <sstream>
 
-// Constante para el tamaño máximo de template
+// Constant for template size
 #define MAX_TEMPLATE_SIZE 2048
 
-// Incluir códigos de error
+// Add error codes
 #include <libzkfperrdef.h>
 
 // Redefinir los códigos de error que tienen punto y coma en el header original
@@ -25,6 +23,9 @@
 #endif
 #define ZKFP_ERR_ALREADY_OPENED -25
 
+#define ZK_LED_GREEN  101
+#define ZK_LED_RED    102
+
 FingerprintServiceImpl::FingerprintServiceImpl()
     : m_hDevice(nullptr)
     , m_hDBCache(nullptr)
@@ -38,9 +39,9 @@ FingerprintServiceImpl::FingerprintServiceImpl()
 
 FingerprintServiceImpl::~FingerprintServiceImpl() {
     // Limpieza automática de recursos
-    closeDevice();
-    freeDatabase();
-    terminate();
+    FingerprintServiceImpl::closeDevice();
+    FingerprintServiceImpl::freeDatabase();
+    FingerprintServiceImpl::terminate();
 }
 
 bool FingerprintServiceImpl::initialize() {
@@ -367,6 +368,36 @@ bool FingerprintServiceImpl::getImageDimensions(int& width, int& height) {
 
 int FingerprintServiceImpl::getLastError() const {
     return m_lastError;
+}
+
+bool FingerprintServiceImpl::setLed(const int ledCode, const bool on) {
+    if (!m_hDevice) return false;
+
+    unsigned char value = on ? 1 : 0;
+
+    const int ret = ZKFPM_SetParameters(
+        m_hDevice,
+        ledCode,
+        &value,
+        1
+    );
+    return ret == 0;
+}
+
+void FingerprintServiceImpl::ledGreenOn() {
+    setLed(ZK_LED_GREEN, true);
+}
+
+void FingerprintServiceImpl::ledGreenOff() {
+    setLed(ZK_LED_GREEN, false);
+}
+
+void FingerprintServiceImpl::ledRedOn() {
+    setLed(ZK_LED_RED, true);
+}
+
+void FingerprintServiceImpl::ledRedOff() {
+    setLed(ZK_LED_RED, false);
 }
 
 std::string FingerprintServiceImpl::getErrorMessage(int errorCode) const {

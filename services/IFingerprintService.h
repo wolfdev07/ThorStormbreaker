@@ -180,9 +180,21 @@ public:
     virtual int getLastError() const = 0;
 
     /**
+     * @brief Controla el LED del lector
+     * @param ledCode Código del LED (rojo, verde, azul)
+     * @param on true = encender, false = apagar
+    */
+    virtual bool setLed(int ledCode, bool on) = 0;
+
+    /**
      * @brief Obtiene el mensaje de error asociado a un código
      * @param errorCode Código de error
      * @return Descripción del error
      */
     virtual std::string getErrorMessage(int errorCode) const = 0;
+
+    virtual void ledGreenOn() = 0;
+    virtual void ledGreenOff() = 0;
+    virtual void ledRedOn() = 0;
+    virtual void ledRedOff() = 0;
 };
