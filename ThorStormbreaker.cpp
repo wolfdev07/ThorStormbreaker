@@ -8,14 +8,44 @@
 #include <memory>
 #include <thread>
 #include <chrono>
+#include <nlohmann/json.hpp>
 
 using namespace std;
+using json = nlohmann::json;
 
 static void initUI() {
     try {
 		// Create webview instance
         WebViewUI ui;
 		// Load the UI from local server
+        ui.bind(
+            "fingerEnrollService",
+            [&](const std::string&req, auto resolve) {
+                // req = JSON desde JS
+                std::cout << "[Thor] Payload recibido: " << req << std::endl;
+
+                try {
+                    json argsPayload = json::parse(req);
+
+                    if (!argsPayload.is_array() || argsPayload.empty()) {
+                        std::cerr << "[C++] Payload no es un array válido\n";
+                        return;
+                    }
+
+                    // String JSON
+                    const std::string payloadStr = argsPayload[0].get<std::string>();
+                    json payload = json::parse(payloadStr);
+
+                    const std::string memberNumber = payload.at("memberNumber").get<std::string>();
+                    std::cout << "[C++] memberNumber = " << memberNumber << std::endl;
+
+                    resolve(R"({"success":true})");
+                } catch (const std::exception& e) {
+                    std::cerr << "[C++] Error parsing JSON: " << e.what() << std::endl;
+                    resolve(R"({"success":false})");
+                }
+            }
+            );
         ui.loadUrl("http://localhost:8000");
         ui.run();
     }
@@ -74,6 +104,6 @@ static void enrollUI() {
 }
 
 int main() {
-    enrollUI();
+    initUI();
     return 0;
 }

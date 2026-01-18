@@ -4,7 +4,7 @@
 WebViewUI::WebViewUI() 
     : wv(true, nullptr) {  // Inicializar en lista de inicialización
     // Configure the webview
-    wv.set_title("Forza (ThorStormbreaker version 2.1.8)");
+    wv.set_title("Forza (Thor Storm Breaker version 2.1.8)");
     wv.set_size(1280, 720, WEBVIEW_HINT_NONE);
 }
 

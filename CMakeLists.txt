@@ -61,15 +61,15 @@ endif()
 
 # Agregue un origen al ejecutable de este proyecto.
 add_executable(ThorStormbreaker 
-        "ThorStormbreaker.cpp"
-        "ThorStormbreaker.h"
-        "services/IFingerprintService.h"
-        "services/implement/FingerprintServiceImpl.h"
-        "services/implement/FingerprintServiceImpl.cpp"
+        ThorStormbreaker.cpp
+        ThorStormbreaker.h
+        services/IFingerprintService.h
+        services/implement/FingerprintServiceImpl.h
+        services/implement/FingerprintServiceImpl.cpp
 
-        "config/SecureString.h"
-        "config/Cipher.h"
-        "config/ConfigManager.h"
+        config/SecureString.h
+        config/Cipher.h
+        config/ConfigManager.h
         config/ConfigEnvironment.h
         config/ConfigGenerator.h
     
@@ -88,6 +88,7 @@ target_link_libraries(ThorStormbreaker PRIVATE
         sqlite3
         ${LIBZKFP_LIBRARY}
         webview::core
+        nlohmann_json::nlohmann_json
 )
 
 # Incluir directorios para el target
@@ -157,4 +158,15 @@ add_library(sqlite3 STATIC
 target_include_directories(sqlite3 PUBLIC
         ${CMAKE_SOURCE_DIR}/external/sqlite3
 )
+
+include(FetchContent)
+
+FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.11.3
+)
+
+FetchContent_MakeAvailable(nlohmann_json)
+
 # TODO: Agregue pruebas y destinos de instalación si es necesario.
