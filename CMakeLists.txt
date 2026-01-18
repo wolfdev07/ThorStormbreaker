@@ -63,18 +63,25 @@ endif()
 add_executable(ThorStormbreaker 
         ThorStormbreaker.cpp
         ThorStormbreaker.h
+
         services/IFingerprintService.h
-        services/implement/FingerprintServiceImpl.h
         services/implement/FingerprintServiceImpl.cpp
+        services/implement/FingerprintServiceImpl.h
+        services/implement/FingerEnrollServiceImpl.cpp
 
         config/SecureString.h
         config/Cipher.h
         config/ConfigManager.h
         config/ConfigEnvironment.h
         config/ConfigGenerator.h
-    
+
+        ui/WebViewUi.cpp
         ui/WebViewUI.h
-        ui/WebViewUI.cpp
+
+        ui/WebBindServices/IFingerEnrollBind.h
+        ui/WebBindServices/FingerEnrollBind.h
+        ui/WebBindServices/FingerEnrollBind.cpp
+
         repository/Respository.h
 )
 
@@ -93,8 +100,9 @@ target_link_libraries(ThorStormbreaker PRIVATE
 
 # Incluir directorios para el target
 target_include_directories(ThorStormbreaker PRIVATE 
-    ${LIBZKFP_DIR}/include
-    ${CMAKE_SOURCE_DIR}/ui
+        ${LIBZKFP_DIR}/include
+        ${CMAKE_SOURCE_DIR}/ui
+        ${CMAKE_SOURCE_DIR}/services
 )
 
 # ============================================
@@ -151,8 +159,6 @@ FetchContent_MakeAvailable(webview)
 
 add_library(sqlite3 STATIC
         ${CMAKE_SOURCE_DIR}/external/sqlite3/sqlite3.c
-        services/implement/FingerEnrollServiceImpl.cpp
-        repository/Respository.h
 )
 
 target_include_directories(sqlite3 PUBLIC
