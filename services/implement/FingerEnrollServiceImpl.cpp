@@ -14,8 +14,8 @@ bool FingerEnrollServiceImpl::isDeviceAvailable() {
 }
 
 void FingerEnrollServiceImpl::enroll(
-    const std::string& uid,
-    std::function<void(const std::string&, const std::string&)> emit,
+    const std::string& memberNumber,
+    const std::function<void(const std::string&, const std::string&)> emit,
     const std::function<void(bool)> done
 ) {
     std::thread([=]() {
@@ -101,7 +101,7 @@ void FingerEnrollServiceImpl::enroll(
         try {
             const FingerPrintRepository repo("repository/thor.db");
 
-            const FingerPrint fp = repo.saveFingerPrint(uid, regTemplate);
+            const FingerPrint fp = repo.saveFingerPrint(memberNumber, regTemplate);
 
             // === Cargar en RAM del lector (DBAdd) ===
             if (!m_fp->addTemplate(fp.id, regTemplate)) {

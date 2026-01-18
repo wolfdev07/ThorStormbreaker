@@ -10,18 +10,16 @@
 using namespace std;
 
 static void initUI() {
-    auto fingerEnrollBind = std::make_shared<FingerEnrollBind>();
+    auto webViewUI = std::make_shared<WebViewUI>();
+    auto fingerEnrollBind = std::make_shared<FingerEnrollBind>(webViewUI);
 
     try {
-
-        WebViewUI webViewUI;
-
-        webViewUI.bind("fingerEnrollService", [fingerEnrollBind](const std::string& request, auto resolve) {
+        webViewUI->bind("fingerEnrollService", [fingerEnrollBind](const std::string& request, auto resolve) {
             fingerEnrollBind->fingerEnroll(request, resolve);
         });
 
-        webViewUI.loadUrl("http://localhost:8000");
-        webViewUI.run();
+        webViewUI->loadUrl("http://localhost:8000");
+        webViewUI->run();
     }
     catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
