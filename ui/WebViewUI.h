@@ -1,6 +1,7 @@
 #pragma once
 
 #include "webview/webview.h"
+#include "WebViewDispatcher.h"
 #include <string>
 
 /**
@@ -38,6 +39,21 @@ public:
      */
     void executeJS(const std::string& js);
 
+	/**
+	 * @brief Metodo dispatcher para cola de tareas entre hilos
+	 */
+	void dispatchToUI(std::function<void()> fn);
+
+	/**
+	 * @brief Evento en cola
+	 */
+	static void enqueueJS(std::string js);
+
+	/**
+	 * @brief Evento en cola
+	 */
+	void dispatch();
+
     /**
      * @brief Inicia el event loop del webview (bloqueante)
      * Este método bloquea hasta que se cierra la ventana
@@ -49,6 +65,7 @@ public:
      */
     void terminate();
 
-    private:
-        webview::webview wv;
+private:
+    webview::webview wv;
+	WebViewDispatcher dispatcher;
 };

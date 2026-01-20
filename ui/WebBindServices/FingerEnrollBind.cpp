@@ -65,7 +65,8 @@ void FingerEnrollBind::emitToJS(const std::string &event, const std::string &pay
 
     const std::string js =
         "window.dispatchEvent(new CustomEvent('fingerprint-enroll-event', { detail: {"
-            "event: '" + event + "', payload: '" + payload + "'"
+        "event: '" + event + "', payload: '" + payload + "'"
         "} }));";
-    webView->executeJS(js);
+
+    webView->enqueueJS(js);
 }

@@ -1,11 +1,21 @@
 #include "WebViewUI.h"
 #include <iostream>
 
-WebViewUI::WebViewUI() 
-    : wv(true, nullptr) {  // Inicializar en lista de inicialización
+std::queue<std::string> jsQueue;
+std::mutex jsMutex;
+
+WebViewUI::WebViewUI() : wv(true, nullptr) {  // Inicializar en lista de inicialización
     // Configure the webview
     wv.set_title("Forza (Thor Storm Breaker version 2.1.8)");
     wv.set_size(1280, 720, WEBVIEW_HINT_NONE);
+
+    wv.init(R"(
+        window.__dispatch__ = function () {
+            if (window.__cppDispatch) {
+                window.__cppDispatch();
+            }
+        };
+    )");
 }
 
 void WebViewUI::loadUrl(const std::string& url) {
@@ -43,10 +53,38 @@ void WebViewUI::executeJS(const std::string& js) {
     wv.eval(js);
 }
 
+void WebViewUI::dispatchToUI(std::function<void()> fn) {
+    // Administrador de tareas y subprocesos
+    dispatcher.dispatch(std::move(fn));
+}
+
 void WebViewUI::run() {
     // Run the webview event loop (blocking)
     std::cout << "[WebView] Iniciando event loop..." << std::endl;
+
+    wv.bind("__cppDispatch", [this](const std::string&, const std::string&, void*) {
+        this->dispatch();
+    }, nullptr);
+
     wv.run();
+}
+
+void WebViewUI::enqueueJS(std::string js) {
+    std::lock_guard<std::mutex> lock(jsMutex);
+    jsQueue.push(std::move(js));
+}
+
+void WebViewUI::dispatch() {
+    std::queue<std::string> local;
+    {
+        std::lock_guard<std::mutex> lock(jsMutex);
+        std::swap(local, jsQueue);
+    }
+
+    while (!local.empty()) {
+        wv.eval(local.front());
+        local.pop();
+    }
 }
 
 void WebViewUI::terminate() {

@@ -83,6 +83,8 @@ add_executable(ThorStormbreaker
         ui/WebBindServices/FingerEnrollBind.cpp
 
         repository/Respository.h
+        ui/WebViewDispatcher.h
+        ui/WebViewDispatcher.h
 )
 
 # Establecer estándar C++ 20
