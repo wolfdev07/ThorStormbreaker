@@ -193,6 +193,12 @@ public:
      */
     virtual std::string getErrorMessage(int errorCode) const = 0;
 
+    /**
+     * @brief cancela el evento
+     * @return void
+     */
+    virtual void cancel() = 0;
+
     virtual void ledGreenOn() = 0;
     virtual void ledGreenOff() = 0;
     virtual void ledRedOn() = 0;

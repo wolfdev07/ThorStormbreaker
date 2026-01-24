@@ -80,4 +80,6 @@ public:
     void ledRedOff() override;
 
     std::string getErrorMessage(int errorCode) const override;
+
+    void cancel() override;
 };

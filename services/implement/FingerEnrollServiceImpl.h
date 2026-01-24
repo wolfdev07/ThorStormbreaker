@@ -2,8 +2,9 @@
 #include "../FingerEnrollService.h"
 #include "../IFingerprintService.h"
 #include <memory>
+#include <atomic>
 
-class FingerEnrollServiceImpl : public FingerEnrollService {
+class FingerEnrollServiceImpl final : public FingerEnrollService {
 
 public:
 	explicit FingerEnrollServiceImpl(std::shared_ptr<IFingerprintService> fp);
@@ -16,6 +17,9 @@ public:
 		std::function<void(bool)> done
 	) override;
 
+	void cancelEnroll() override;
+
 private:
 	std::shared_ptr<IFingerprintService> m_fp;
+	std::atomic<bool> cancelled{false};
 };

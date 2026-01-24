@@ -8,6 +8,7 @@
 #include "implement/FingerprintServiceImpl.h"
 #include "AccessBackgroundService.h"
 #include <iostream>
+#include <utility>
 
 App::App(){}
 
@@ -41,7 +42,13 @@ void App::initBinds() {
     auto fingerEnrollBind = std::make_shared<FingerEnrollBind>(webView);
 
     webView->bind("fingerEnrollService", [fingerEnrollBind](const std::string& request, auto resolve) {
-        fingerEnrollBind->fingerEnroll(request, resolve);
+        fingerEnrollBind->fingerEnroll(request, std::move(resolve));
+    });
+
+    webView->bind("cancelFingerprintEnroll", [fingerEnrollBind](const std::string&, const auto& resolve) {
+        std::cout << "[Thor] Cancel enroll requested" << std::endl;
+        fingerEnrollBind->cancel();
+        resolve(R"({"success":true})");
     });
 };
 

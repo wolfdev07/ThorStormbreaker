@@ -18,7 +18,9 @@ void FingerEnrollServiceImpl::enroll(
     const std::function<void(const std::string&, const std::string&)> emit,
     const std::function<void(bool)> done
 ) {
-    std::thread([=]() {
+    cancelled = false;
+
+    std::thread([this, emit, done, memberNumber](){
 
         emit("status", "initializing");
 
@@ -59,6 +61,14 @@ void FingerEnrollServiceImpl::enroll(
             bool captured = false;
 
             for (int retry = 0; retry < 150; ++retry) {
+
+                if (cancelled) {
+                    emit("cancelled", "user_cancelled");
+                    m_fp->closeDevice();
+                    done(false);
+                    return;
+                }
+
                 if (m_fp->acquireFingerprint(img, tmpl)) {
                     templates.push_back(tmpl);
                     emit("capture", std::to_string(i + 1));
@@ -127,4 +137,14 @@ void FingerEnrollServiceImpl::enroll(
         m_fp->closeDevice();
 
     }).detach();
+}
+
+void FingerEnrollServiceImpl::cancelEnroll() {
+    cancelled = true;
+
+    if (m_fp) {
+        m_fp->setLed(101, false);
+        m_fp->setLed(102, false);
+        m_fp->closeDevice();
+    }
 }

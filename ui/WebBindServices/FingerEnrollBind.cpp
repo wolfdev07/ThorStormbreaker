@@ -9,7 +9,7 @@
 
 using json = nlohmann::json;
 
-FingerEnrollBind::FingerEnrollBind(std::shared_ptr<WebViewUI> webViewUI): webView(std::move(webViewUI)) {
+FingerEnrollBind::FingerEnrollBind(std::shared_ptr<WebViewUI> webView): webView(std::move(webView)) {
     fingerprintService = std::make_shared<FingerprintServiceImpl>();
     enrollService = std::make_shared<FingerEnrollServiceImpl>(fingerprintService);
 
@@ -68,5 +68,14 @@ void FingerEnrollBind::emitToJS(const std::string &event, const std::string &pay
         "event: '" + event + "', payload: '" + payload + "'"
         "} }));";
 
-    webView->enqueueJS(js);
+    WebViewUI::enqueueJS(js);
 }
+
+void FingerEnrollBind::cancel() const {
+    if (!enrollService) return;
+
+    std::cout << "[FingerEnrollBind] Cancel enroll requested" << std::endl;
+
+    enrollService->cancelEnroll();
+}
+

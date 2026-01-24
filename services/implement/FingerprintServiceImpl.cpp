@@ -458,3 +458,16 @@ std::string FingerprintServiceImpl::getErrorMessage(int errorCode) const {
             return "Error desconocido (código: " + std::to_string(errorCode) + ")";
     }
 }
+
+void FingerprintServiceImpl::cancel() {
+    if (!m_isDeviceOpen || m_hDevice == nullptr) {
+        return;
+    }
+
+    ZKFPM_CloseDevice(m_hDevice);
+
+    m_hDevice = nullptr;
+    m_isDeviceOpen = false;
+
+    m_lastError = ZKFP_ERR_CANCEL;
+}

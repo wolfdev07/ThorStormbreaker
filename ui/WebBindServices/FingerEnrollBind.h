@@ -18,6 +18,8 @@ public:
 
     void fingerEnroll(const std::string &request, std::function<void(const std::string &)> resolve) override;
 
+    void cancel() const;
+
 private:
     std::shared_ptr<WebViewUI> webView;
     std::shared_ptr<IFingerprintService> fingerprintService;

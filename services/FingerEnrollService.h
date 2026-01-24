@@ -17,4 +17,5 @@ public:
 		std::function<void(bool success)> done
 	) = 0;
 
+	virtual void cancelEnroll() = 0;
 };
