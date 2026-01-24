@@ -85,6 +85,11 @@ add_executable(ThorStormbreaker
         repository/Respository.h
         ui/WebViewDispatcher.h
         ui/WebViewDispatcher.h
+        app/App.h
+        app/App.cpp
+        services/AccessBackgroundService.h
+        services/implement/AccessBackgroundService.cpp
+        services/implement/AccessBackgroundService.cpp
 )
 
 # Establecer estándar C++ 20
@@ -101,7 +106,8 @@ target_link_libraries(ThorStormbreaker PRIVATE
 )
 
 # Incluir directorios para el target
-target_include_directories(ThorStormbreaker PRIVATE 
+target_include_directories(ThorStormbreaker PRIVATE
+        ${CMAKE_SOURCE_DIR}/app
         ${LIBZKFP_DIR}/include
         ${CMAKE_SOURCE_DIR}/ui
         ${CMAKE_SOURCE_DIR}/services
