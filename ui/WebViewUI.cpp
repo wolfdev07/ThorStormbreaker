@@ -63,7 +63,8 @@ void WebViewUI::run() {
     std::cout << "[WebView] Iniciando event loop..." << std::endl;
 
     wv.bind("__cppDispatch", [this](const std::string&, const std::string&, void*) {
-        this->dispatch();
+        dispatcher.process();
+        dispatch();
     }, nullptr);
 
     wv.run();

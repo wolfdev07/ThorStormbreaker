@@ -21,8 +21,12 @@ void App::start() {
         return;
     }
 
+    auto fingerprintService = std::make_shared<FingerprintServiceImpl>();
+    deviceManager = std::make_shared<FingerprintDeviceManager>(fingerprintService);
+
     initBinds();
     initBackgroundServices();
+
     webView->run();
 }
 
@@ -39,7 +43,12 @@ bool App::checkDevices() {
 }
 
 void App::initBinds() {
-    auto fingerEnrollBind = std::make_shared<FingerEnrollBind>(webView);
+    if (!webView || !deviceManager) {
+        std::cerr << "[App] initBinds failed: dependencies not ready" << std::endl;
+        return;
+    }
+
+    auto fingerEnrollBind = std::make_shared<FingerEnrollBind>(webView, deviceManager);
 
     webView->bind("fingerEnrollService", [fingerEnrollBind](const std::string& request, auto resolve) {
         fingerEnrollBind->fingerEnroll(request, std::move(resolve));
@@ -53,6 +62,10 @@ void App::initBinds() {
 };
 
 void App::initBackgroundServices() {
-    const auto accessService = std::make_shared<AccessBackgroundService>(webView);
-    accessService->start();
+    accessBackgroundService = std::make_shared<AccessBackgroundService>(
+        webView,
+        deviceManager
+    );
+
+    accessBackgroundService->start();
 }

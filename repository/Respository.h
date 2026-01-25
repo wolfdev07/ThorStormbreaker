@@ -140,4 +140,74 @@ public:
         sqlite3_finalize(stmt);
         return fp;
     }
+
+    [[nodiscard]] bool existsByUid(const std::string& uid) const {
+        const auto sql = "SELECT 1 FROM fingerprints WHERE uid = ? LIMIT 1;";
+        sqlite3_stmt* stmt;
+
+        sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+        sqlite3_bind_text(stmt, 1, uid.c_str(), -1, SQLITE_STATIC);
+
+        const bool exists = (sqlite3_step(stmt) == SQLITE_ROW);
+
+        sqlite3_finalize(stmt);
+        return exists;
+    }
+
+    [[nodiscard]] FingerPrint getByUid(const std::string& uid) const {
+        const auto sql =
+            "SELECT id, uid, template, created_at "
+            "FROM fingerprints WHERE uid = ? LIMIT 1;";
+
+        sqlite3_stmt* stmt;
+        sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+        sqlite3_bind_text(stmt, 1, uid.c_str(), -1, SQLITE_STATIC);
+
+        if (sqlite3_step(stmt) != SQLITE_ROW) {
+            sqlite3_finalize(stmt);
+            throw std::runtime_error("Fingerprint not found for uid");
+        }
+
+        FingerPrint fp;
+        fp.id = sqlite3_column_int(stmt, 0);
+        fp.uid = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+
+        const auto* blob =
+            static_cast<const uint8_t*>(sqlite3_column_blob(stmt, 2));
+        const int size = sqlite3_column_bytes(stmt, 2);
+        fp.templateData.assign(blob, blob + size);
+
+        fp.createdAt =
+            reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+
+        sqlite3_finalize(stmt);
+        return fp;
+    }
+
+    [[nodiscard]] FingerPrint replaceByUid(
+        const std::string& uid,
+        const std::vector<uint8_t>& tpl
+        ) const {
+        const auto sql =
+            "UPDATE fingerprints "
+            "SET template = ?, created_at = ? "
+            "WHERE uid = ?;";
+
+        sqlite3_stmt* stmt;
+        sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+
+        sqlite3_bind_blob(stmt, 1, tpl.data(), (int)tpl.size(), SQLITE_STATIC);
+        const std::string created = now();
+        sqlite3_bind_text(stmt, 2, created.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 3, uid.c_str(), -1, SQLITE_STATIC);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE) {
+            sqlite3_finalize(stmt);
+            throw std::runtime_error("Error updating fingerprint");
+        }
+
+        sqlite3_finalize(stmt);
+
+        return getByUid(uid);
+    }
 };

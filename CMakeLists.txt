@@ -90,6 +90,8 @@ add_executable(ThorStormbreaker
         services/AccessBackgroundService.h
         services/implement/AccessBackgroundService.cpp
         services/implement/AccessBackgroundService.cpp
+        services/FingerprintDeviceManager.h
+        services/implement/FingerprintDeviceManager.cpp
 )
 
 # Establecer estándar C++ 20
@@ -111,6 +113,7 @@ target_include_directories(ThorStormbreaker PRIVATE
         ${LIBZKFP_DIR}/include
         ${CMAKE_SOURCE_DIR}/ui
         ${CMAKE_SOURCE_DIR}/services
+        ${CMAKE_SOURCE_DIR}/repository
 )
 
 # ============================================

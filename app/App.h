@@ -4,6 +4,8 @@
 #pragma once
 #include <memory>
 #include <WebViewUI.h>
+#include "AccessBackgroundService.h"
+#include "FingerprintDeviceManager.h"
 
 class WebViewUI;
 
@@ -20,4 +22,6 @@ private:
     static bool checkDevices();
 
     std::shared_ptr<WebViewUI> webView;
+    std::shared_ptr<FingerprintDeviceManager> deviceManager;
+    std::shared_ptr<AccessBackgroundService> accessBackgroundService;
 };

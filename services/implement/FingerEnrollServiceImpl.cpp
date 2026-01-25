@@ -1,5 +1,5 @@
 #include "FingerEnrollServiceImpl.h"
-#include "../../repository/Respository.h"
+#include "Respository.h"
 
 #include <thread>
 #include <utility>
@@ -24,30 +24,6 @@ void FingerEnrollServiceImpl::enroll(
 
         emit("status", "initializing");
 
-        if (!m_fp->initialize()) {
-            emit("error", "sdk_init_failed");
-            done(false);
-            return;
-        }
-
-        if (m_fp->getDeviceCount() <= 0) {
-            emit("error", "no_device");
-            done(false);
-            return;
-        }
-
-        if (!m_fp->openDevice(0)) {
-            emit("error", "open_device_failed");
-            done(false);
-            return;
-        }
-
-        if (!m_fp->initDatabase()) {
-            emit("error", "init_database_failed");
-            m_fp->closeDevice();
-            return;
-        }
-
         std::vector<std::vector<unsigned char>> templates;
 
         emit("status", "enrolling");
@@ -64,7 +40,6 @@ void FingerEnrollServiceImpl::enroll(
 
                 if (cancelled) {
                     emit("cancelled", "user_cancelled");
-                    m_fp->closeDevice();
                     done(false);
                     return;
                 }
@@ -81,7 +56,6 @@ void FingerEnrollServiceImpl::enroll(
 
             if (!captured) {
                 emit("error", "capture_timeout");
-                m_fp->closeDevice();
                 done(false);
                 return;
             }
@@ -100,7 +74,6 @@ void FingerEnrollServiceImpl::enroll(
             regTemplate
         )) {
             emit("error", "merge_failed");
-            m_fp->closeDevice();
             done(false);
             return;
         }
@@ -111,12 +84,17 @@ void FingerEnrollServiceImpl::enroll(
         try {
             const FingerPrintRepository repo("repository/thor.db");
 
-            const FingerPrint fp = repo.saveFingerPrint(memberNumber, regTemplate);
+            FingerPrint fp;
+
+            if (repo.existsByUid(memberNumber)) {
+                fp = repo.replaceByUid(memberNumber, regTemplate);
+            } else {
+                fp = repo.saveFingerPrint(memberNumber, regTemplate);
+            }
 
             // === Cargar en RAM del lector (DBAdd) ===
             if (!m_fp->addTemplate(fp.id, regTemplate)) {
                 emit("error", "dbadd_failed");
-                m_fp->closeDevice();
                 done(false);
                 return;
             }
@@ -134,7 +112,6 @@ void FingerEnrollServiceImpl::enroll(
             m_fp->setLed(102, false);
             done(false);
         }
-        m_fp->closeDevice();
 
     }).detach();
 }
@@ -145,6 +122,5 @@ void FingerEnrollServiceImpl::cancelEnroll() {
     if (m_fp) {
         m_fp->setLed(101, false);
         m_fp->setLed(102, false);
-        m_fp->closeDevice();
     }
 }
