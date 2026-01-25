@@ -64,8 +64,6 @@ bool FingerprintDeviceManager::switchToEnroll(
     currentEnrollService = std::make_shared<FingerEnrollServiceImpl>(m_fp);
     mode = FingerprintMode::Enroll;
 
-    m_fp->clearDatabase();
-
     // Execute enroll in other thread
     std::thread([this, svc = currentEnrollService, memberNumber, emit, done]() {
         svc->enroll(
@@ -75,7 +73,7 @@ bool FingerprintDeviceManager::switchToEnroll(
                 {
                     std::lock_guard<std::mutex> lock_done(m_mutex);
                     currentEnrollService.reset();
-                    mode = FingerprintMode::Enroll;
+                    mode = FingerprintMode::Idle;
                 }
 
                 switchToAccess();
@@ -105,13 +103,11 @@ bool FingerprintDeviceManager::loadDatabaseFromSQLite() const {
         return false;
     }
 
-    m_fp->initDatabase();
-
     const auto all = repo.getAll();
 
     for (const auto& fp : all) {
         if (!m_fp->addTemplate(fp.id, fp.templateData)) {
-            std::cerr << "[DeviceManager] Failed to load fid=" << fp.id << std::endl;
+            std::cerr << "[DeviceManager] Template already exists fid=" << fp.id << std::endl;
         }
     }
 
