@@ -10,7 +10,7 @@
 #include <iostream>
 #include <utility>
 
-App::App(){}
+App::App()= default;
 
 void App::start() {
     initUI();
@@ -62,10 +62,9 @@ void App::initBinds() {
 };
 
 void App::initBackgroundServices() {
-    accessBackgroundService = std::make_shared<AccessBackgroundService>(
-        webView,
-        deviceManager
-    );
+    accessBackgroundService = std::make_shared<AccessBackgroundService>(webView, deviceManager);
+
+    if (!deviceManager->switchToAccess()) std::cerr << "[App] Failed to initialize ACCESS mode" << std::endl;
 
     accessBackgroundService->start();
 }
