@@ -40,25 +40,20 @@ void AccessBackgroundService::stop() {
 }
 
 void AccessBackgroundService::loop() {
-    std::cout << "[AccessBackgroundService] Starting loop" << std::endl;
-
-    if (!m_deviceManager->switchToAccess()) {
-        std::cerr << "[Access] Cannot switch device to access mode" << std::endl;
-        return;
-    }
+    std::cout << "[Access] Starting loop" << std::endl;
 
     auto fp = m_deviceManager->service();
-
-    if (!fp) {
-        std::cerr << "[Access] Fingerprint service not available" << std::endl;
-        return;
-    }
-
     FingerPrintRepository repo("repository/thor.db");
+
     std::vector<unsigned char> img;
     std::vector<unsigned char> tmpl;
 
     while (running) {
+        if (!m_deviceManager->isInAccessMode()) {
+            Sleep(200);
+            continue;
+        }
+
         if (!fp->acquireFingerprint(img, tmpl)) {
             Sleep(100);
             continue;
@@ -68,34 +63,26 @@ void AccessBackgroundService::loop() {
         unsigned int score = 0;
 
         if (!fp->identify(tmpl, fid, score)) {
-            Sleep(800);
+            Sleep(500);
             continue;
         }
-
-        if (static_cast<int>(fid) == lastFid) {
-            Sleep(800);
-            continue;
-        }
-
-        lastFid = static_cast<int>(fid);
 
         try {
-            FingerPrint fpData = repo.getById(lastFid);
-
-            std::cout << "[Access] Match OK | fid=" << fid
-                      << " | uid=" << fpData.uid
-                      << " | score=" << score << std::endl;
+            FingerPrint fpData = repo.getById(static_cast<int>(fid));
 
             emitEventToUI("fingerprint_uid", fpData.uid);
-        } catch (const std::exception& e) {
-            std::cerr << "[Access] Repository error: " << e.what() << std::endl;
+
+            std::cout << "[Access] Match OK | fid=" << fid << " | score=" << score << "\n";
+
+            m_deviceManager->switchToAccess();
+
+            Sleep(1500);
+        } catch (std::exception& e) {
+            std::cout << "[Access] Exception : " << e.what() << std::endl;
+            Sleep(1500);
         }
-
-        Sleep(2000);
     }
-
-    m_deviceManager->stop();
-    std::cout << "[AccessBackgroundService] Loop stopped" << std::endl;
+    std::cout << "[Access] Background loop stopped\n";
 }
 
 void AccessBackgroundService::emitEventToUI(

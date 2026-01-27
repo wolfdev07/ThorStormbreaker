@@ -20,31 +20,35 @@ class FingerprintDeviceManager {
 public:
     explicit FingerprintDeviceManager(std::shared_ptr<IFingerprintService> fp);
 
+    std::shared_ptr<IFingerprintService> service();
+
+    // Switch Mode
     bool switchToAccess();
 
     bool switchToEnroll(
-        const std::string& memberNumber,
-        std::function<void(const std::string&, const std::string&)> emit,
-        std::function<void(bool)> done
-        );
+        const std::string &memberNumber,
+        const std::function<void(const std::string &, const std::string &)>& emit,
+        const std::function<void(bool)>& done
+    );
 
+    // Stoppers
     void stop();
-
     void cancelEnroll();
 
-    std::shared_ptr<IFingerprintService> service();
+    // State Queries
+    bool isInAccessMode() const;
+    bool isInEnrollMode() const;
 
 private:
+    bool openDevice() const;
+    void closeDevice() const;
+    bool reloadDatabase() const;
 
-    bool openDeviceLocked() const;
-
-    bool loadDatabaseFromSQLite() const;
-
+private:
     std::shared_ptr<IFingerprintService> m_fp;
 
-    std::mutex m_mutex;
-
-    FingerprintMode mode{FingerprintMode::Idle};
+    mutable std::mutex m_mutex;
+    std::atomic<FingerprintMode> mode{FingerprintMode::Idle};
 
     std::shared_ptr<FingerEnrollService> currentEnrollService;
 };

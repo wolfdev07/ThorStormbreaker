@@ -43,8 +43,8 @@ void FingerEnrollBind::fingerEnroll(const std::string &request, std::function<vo
 
             [resolve](const bool success) {
                 resolve(success
-                    ?R"({"success":true})"
-                    :R"({"success":false})"
+                            ?R"({"success":true})"
+                            :R"({"success":false})"
                 );
             }
         );
