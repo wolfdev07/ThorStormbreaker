@@ -8,8 +8,6 @@
 #include <string>
 
 #include <WebViewUI.h>
-#include  <IFingerprintService.h>
-
 #include "FingerprintDeviceManager.h"
 
 class AccessBackgroundService {

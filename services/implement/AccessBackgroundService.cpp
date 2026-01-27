@@ -9,13 +9,11 @@
 
 #include "FingerprintDeviceManager.h"
 
-
 AccessBackgroundService::AccessBackgroundService(
     std::shared_ptr<WebViewUI> webView,
     std::shared_ptr<FingerprintDeviceManager> manager
     )
 : m_webView(std::move(webView)), m_deviceManager(std::move(manager)) {}
-
 
 AccessBackgroundService::~AccessBackgroundService() {
     stop();

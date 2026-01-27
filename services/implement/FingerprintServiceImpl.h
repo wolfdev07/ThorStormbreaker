@@ -2,7 +2,6 @@
 
 #include "../IFingerprintService.h"
 #include <windows.h>
-#include <libzkfp.h>
 
 /**
  * @brief Implementación concreta del servicio de huellas dactilares usando libzkfp

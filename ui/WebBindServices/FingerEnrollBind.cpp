@@ -2,9 +2,6 @@
 // Created by artur on 17/01/2026.
 //
 #include "FingerEnrollBind.h"
-#include "implement/FingerprintServiceImpl.h"
-#include "implement/FingerEnrollServiceImpl.h"
-
 #include <iostream>
 
 using json = nlohmann::json;
@@ -27,7 +24,7 @@ void FingerEnrollBind::fingerEnroll(const std::string &request, std::function<vo
         if (!args.is_array() || args.empty()) {
             throw std::invalid_argument("Payload recibido incorrecto");
         }
-        // Convertir el payload
+        // Convert payload
         const std::string payloadStr = args[0].get<std::string>();
         json payload = json::parse(payloadStr);
 
@@ -75,4 +72,3 @@ void FingerEnrollBind::cancel() const {
     std::cout << "[FingerEnrollBind] Cancel enroll requested" << std::endl;
     deviceManager->cancelEnroll();
 }
-

@@ -151,5 +151,5 @@ bool FingerprintDeviceManager::reloadDatabase() const {
     }
 
     std::cout << "[DeviceManager] Loaded " << all.size() << " fingerprints\n";
-    return !all.empty();
+    return true;
 }
