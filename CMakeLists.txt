@@ -138,6 +138,27 @@ target_link_libraries(ThorStormbreaker PRIVATE
 )
 
 # ============================================
+# Runtime MinGW DLLs (necesarias fuera de CLion)
+# ============================================
+if (WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    get_filename_component(MINGW_BIN_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
+
+    foreach(dll
+            libstdc++-6.dll
+            libgcc_s_seh-1.dll
+            libwinpthread-1.dll
+    )
+        if (EXISTS "${MINGW_BIN_DIR}/${dll}")
+            add_custom_command(TARGET ThorStormbreaker POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${MINGW_BIN_DIR}/${dll}"
+                    $<TARGET_FILE_DIR:ThorStormbreaker>
+            )
+        endif()
+    endforeach()
+endif()
+
+# ============================================
 # Post-build: recursos
 # ============================================
 add_custom_command(TARGET ThorStormbreaker POST_BUILD
